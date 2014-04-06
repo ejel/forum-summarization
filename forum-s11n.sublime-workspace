@@ -1,0 +1,1191 @@
+{
+	"auto_complete":
+	{
+		"selected_items":
+		[
+		]
+	},
+	"buffers":
+	[
+		{
+			"file": "/Users/ejel/mead/bin/feature-scripts/Skeleton.pl",
+			"settings":
+			{
+				"buffer_size": 1746,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "meadconfig.rc",
+			"settings":
+			{
+				"buffer_size": 409,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "Sentences/NYC/feature/60763_5_3056374.Length.sentfeature",
+			"settings":
+			{
+				"buffer_size": 3558,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"contents": "#!/usr/bin/perl\n\n# Copyright © 2010 Kavita Ganesan www.kavita-ganesan.com/\n# Date:        12/18/2010\n# Author:      Kavita Ganesan (kganes2@illinois.edu)\n#   This program is free software: you can redistribute it and/or modify\n#    it under the terms of the GNU General Public License as published by\n#    the Free Software Foundation, either version 3 of the License, or\n#    (at your option) any later version.\n#\n#    This program is distributed in the hope that it will be useful,\n#    but WITHOUT ANY WARRANTY; without even the implied warranty of\n#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\n#    GNU General Public License for more details.\n#\n#    You should have received a copy of the GNU General Public License\n#    along with this program.  If not, see <http://www.gnu.org/licenses/>.\n\n\nuse strict;\n\n\n\nmy $OUTPUT_HOME = \"/Users/ejel/post-summarization/Sentences/rogue-prep/output\"; #where to generate output\nmy $DIR_SYSTEM=\"/Users/ejel/post-summarization/Sentences/rogue-prep/system\"; # location of system generated files\nmy $DIR_GOLD=\"/Users/ejel/post-summarization/Sentences/rogue-prep/gold\"; # location of gold standard files\n\n#`rm -r $OUTPUT_HOME `;\n\n\n`mkdir $OUTPUT_HOME `;\n`mkdir $OUTPUT_HOME/systems `;\n`mkdir $OUTPUT_HOME/models `;\n\nmy $systemFile = shift;\nmy @models = @ARGV;\nmy @sentences = ();\n\nopendir(GOLD, \"$DIR_GOLD\") || die(\"Cannot open directory\");\nmy @thegoldfiles= readdir(GOLD);\n\n#gold standard files are inside a directory\nforeach my $goldir (@thegoldfiles)\n{\n	my $thepath=\"$DIR_GOLD/$goldir\";\n\n	if ((-d $thepath) && ($goldir ne '.') && ($goldir ne '..') ) {\n\n		opendir(GOLDFILES, \"$DIR_GOLD/$goldir\") || die(\"Cannot open directory\");\n		my @thefiles= readdir(GOLDFILES);\n\n		foreach my $file (@thefiles)\n		{\n			print $file;\n			if( ($file ne '.') && ($file ne '..')){\n				my $abspath=\"$thepath/$file\";\n				@sentences = &open_file($abspath);\n				open (MODEL,\">$OUTPUT_HOME/models/$file.html\");\n				print MODEL \"<html>\n				<head>\n				<title>$file.html</title>\n				</head>\n				<body bgcolor=\\\"white\\\">\\n\";\n				my $count = 1;\n				foreach my $j (0..$#sentences) {\n						print MODEL \"<a name=\\\"$count\\\">[$count]</a> <a href=\\\"#$count\\\" id=$count>\";\n						print MODEL $sentences[$j];\n						print MODEL \"</a>\\n\";\n						$count++;\n				}\n				print MODEL \"</body>\n									 </html>\\n\";\n			close MODEL;\n			}\n			}\n		}\n	}\n\n\n\nopendir(SYS, \"$DIR_SYSTEM\") || die(\"Cannot open directory\");\nmy @theSYSfiles= readdir(SYS);\n#gold standard files are inside a directory\nforeach my $SYSdir (@theSYSfiles)\n{\n	my $thepath=\"$DIR_SYSTEM/$SYSdir\";\n\n	if ((-d $thepath) && ($SYSdir ne '.') && ($SYSdir ne '..') ) {\n\n		opendir(SYSFILES, \"$DIR_SYSTEM/$SYSdir\") || die(\"Cannot open directory\");\n		my @thefiles= readdir(SYSFILES);\n\n		foreach my $file (@thefiles)\n		{\n			if( ($file ne '.') && ($file ne '..')){\n				my $abspath=\"$thepath/$file\";\n				@sentences = &open_file($abspath);\n\n				open (SYSTEM, \">$OUTPUT_HOME/systems/$file.html\");\n				print SYSTEM \"<html>\n				<head>\n				<title>$file.html</title>\n				</head>\n				<body bgcolor=\\\"white\\\">\\n\";\n\n				my $count = 1;\n\n				foreach my $i (0..$#sentences) {\n					print SYSTEM \"<a name=\\\"$count\\\">[$count]</a> <a href=\\\"#$count\\\" id=$count>\";\n					print SYSTEM $sentences[$i];\n					print SYSTEM \"</a>\\n\";\n					$count++;\n				}\n				print SYSTEM \"</body>\n				</html>\\n\";\n				close SYSTEM;\n				}\n			}\n		}\n}\n\nmy $evalID = 1;\nmy $fileid=0;\n\n# `rm $OUTPUT_HOME/settings.xml`;\n\nopen (CONFIG, \">$OUTPUT_HOME/settings.xml\");\nprint CONFIG \"<ROUGE_EVAL version=\\\"1.5.5\\\">\\n\";\n\nopendir(GOLD, \"$DIR_GOLD\") || die(\"Cannot open directory\");\nmy @thegoldfiles= readdir(GOLD);\n#gold standard files are inside a directory\nforeach my $file (@thegoldfiles)\n{\n\n	if ((-d \"$DIR_GOLD/$file\") && ($file ne '.') && ($file ne '..') ) {\n\n	my @models;\n	my @peers;\n	opendir DIR, \"$OUTPUT_HOME/models\";\n	@models = grep { /$file.*/} readdir DIR;\n	closedir DIR;\n\n	opendir DIR, \"$OUTPUT_HOME/systems\";\n	@peers = grep { /$file.*/} readdir DIR;\n	closedir DIR;\n\n	my $id=1;\n\n	$fileid++;\n\n	my $msize= @models;\n\n\n\n\n	my $count=0;\n	my $limit=$msize;\n\n\n	if (scalar(@peers)>0) {\n\n	print CONFIG \"<EVAL ID=\\\"$evalID\\\">\\n\";\n	print CONFIG \"<PEER-ROOT>systems</PEER-ROOT>\\n\";\n	print CONFIG \"<MODEL-ROOT>models</MODEL-ROOT>\\n\";\n	print CONFIG \"<INPUT-FORMAT TYPE=\\\"SEE\\\"></INPUT-FORMAT>\\n<PEERS>\";\n	my $id=1;\n	foreach my $peer (@peers)\n	{\n		my $pid=\"\";\n\n		if($peer =~ m/.*system.*html/ig){\n			my @tokens=split('\\.system.*',$peer);\n			my $tmp=$tokens[0];\n			$tmp=~s/\\./!/i;\n			my @tokens=split('!',$tmp);\n			$pid=$pid.$tokens[1];\n		}\n\n\n		print CONFIG \"\\n<P ID=\\\"$pid\\\">$peer</P>\";\n\n	}\n\n	print CONFIG \"</PEERS>\\n\n	<MODELS>\\n\";\n	my $id=1;\n	foreach my $model (@models)\n	{\n			print CONFIG \"\\n<M ID=\\\"$id\\\">$model</M>\";\n			$id++;\n	}\n\n\n	print CONFIG \"\\n</MODELS>\n	</EVAL>\\n\";\n	}\n	$evalID++;\n\n	 #done eval\n	}\n}\n\nprint CONFIG \"\\n</ROUGE_EVAL>\";\nclose CONFIG;\n\n#====================================\nsub open_file{\nmy $file = shift;\n\nmy @sents = ();\n\nlocal( $/ ) = undef;\n\nopen(FILE, \"$file\") or die \"can't find the file: $file. \\n\";\n\nmy $input = <FILE>;\n\nclose FILE;\n\nif ($input =~/DOCTYPE DOCUMENT SYSTEM/){\n   my $text = \"\";\n   $input =~/<TEXT>(.*)<\\/TEXT>/s;\n   $text = $1;\n   @sents = split /[\\n\\r]/, $text;\n}\n\nelse {\n\n@sents = split /[\\n\\r]/, $input;\n\nforeach my $s (@sents){\n   $s =~s/^\\[\\d+\\]\\s+(.*)/$1/;\n  }\n}\nreturn @sents;\n}\n\n",
+			"file": "prepare4rouge-simple.pl",
+			"file_size": -1,
+			"file_write_time": -1,
+			"settings":
+			{
+				"buffer_size": 5337,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "mead2rouge.pl",
+			"settings":
+			{
+				"buffer_size": 3218,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"contents": "~/post-summarization/gen-cluster.rb ~/post-summarization/Sentences/NYC/*.xml\n\nfor file (/Users/ejel/post-summarization/Sentences/NYC/*.xml) xsltproc --encoding \"UTF-8\"  ~/post-summarization/docsent-post.xsl $file > $file:r.docsent\n\n# move docsent, cluster to staging area\n\n# run MEAD\n",
+			"file": "see-convert.pl",
+			"file_size": -1,
+			"file_write_time": -1,
+			"settings":
+			{
+				"buffer_size": 284,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "mmr-classifier.py",
+			"settings":
+			{
+				"buffer_size": 518,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"contents": "#!/Users/ejel/perl5/perlbrew/perls/perl-5.19.3/bin/perl\n#\n# usage: echo cluster_file_name | Centroid.pl <idffile> (ENG|CHIN) <datadir>\n#\n\n#\n# TODO: AJW 9/23\n# actually use the IDF file information.\n#\n\nuse strict;\n\nuse FindBin;\nuse lib \"$FindBin::Bin/../../lib/\", \"$FindBin::Bin/../../lib/arch/\";\n\nuse Essence::IDF;\nuse Essence::Centroid;\n\nuse MEAD::SentFeature;\n\n# command-line args.\nmy $idf_file = shift;\nmy $lang = shift;\nmy $datadir = shift;\n\n# open the specified IDF file.\nopen_nidf($idf_file);\n\n# Centroid and the max value for any sentence.\nmy $centroid = Essence::Centroid->new();\nmy $max_cent = 0;\n\nextract_sentfeatures($datadir, {'Cluster'=>\\&cluster, \n				'Sentence' =>\\&sentence});\n\nsub cluster {\n    my $cluster = shift;\n    my $query = shift; # ignored.\n\n    my @sents;\n\n    foreach my $did (keys %{$cluster}) {\n	   my $docref = $$cluster{$did};\n	\n	   my $text;\n	   foreach my $sentref (@{$docref}) {\n	      $text .= \" \" . $$sentref{'TEXT'};\n	      push @sents, $$sentref{'TEXT'};\n	    }\n	    $centroid->add_document($text);\n    }\n\n    foreach my $s (@sents) {\n	    my $score = $centroid->centroid_score($s);\n	    if ($score > $max_cent) {\n	    $max_cent = $score;\n	  }\n  }\n\n}\n\nsub sentence {\n    my $feature_vector = shift;\n    my $attribs = shift;\n\n    my $text = $$attribs{\"TEXT\"};\n    my $score = $centroid->centroid_score($text);\n    $$feature_vector{'Centroid'} = sprintf(\"%17.15f\", $score / $max_cent);\n}\n",
+			"file": "/Users/ejel/mead/bin/feature-scripts/Centroid.pl",
+			"file_size": 1397,
+			"file_write_time": 130402039980000000,
+			"settings":
+			{
+				"buffer_size": 1425,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "/Users/ejel/mead/bin/feature-scripts/Length.pl",
+			"settings":
+			{
+				"buffer_size": 503,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "/Users/ejel/mead/bin/feature-scripts/Position.pl",
+			"settings":
+			{
+				"buffer_size": 561,
+				"line_ending": "Unix"
+			}
+		}
+	],
+	"build_system": "",
+	"command_palette":
+	{
+		"height": 400.0,
+		"selected_items":
+		[
+			[
+				"pc",
+				"Package Control: Install Package"
+			],
+			[
+				"pc up",
+				"Package Control: Upgrade Package"
+			],
+			[
+				"Install",
+				"Package Control: Install Package"
+			],
+			[
+				"pacck",
+				"Package Control: Install Package"
+			],
+			[
+				"PCIP",
+				"Package Control: Install Package"
+			],
+			[
+				"pcin",
+				"Package Control: Install Package"
+			],
+			[
+				"Pack",
+				"Package Control: Install Package"
+			],
+			[
+				"",
+				"Package Control: List Packages"
+			]
+		],
+		"width": 457.0
+	},
+	"console":
+	{
+		"height": 139.0,
+		"history":
+		[
+			"import urllib.request,os; pf = 'Package Control.sublime-package'; ipp = sublime.installed_packages_path(); urllib.request.install_opener( urllib.request.build_opener( urllib.request.ProxyHandler()) ); open(os.path.join(ipp, pf), 'wb').write(urllib.request.urlopen( 'http://sublime.wbond.net/' + pf.replace(' ','%20')).read())"
+		]
+	},
+	"distraction_free":
+	{
+		"menu_visible": true,
+		"show_minimap": false,
+		"show_open_files": false,
+		"show_tabs": false,
+		"side_bar_visible": false,
+		"status_bar_visible": false
+	},
+	"file_history":
+	[
+		"/Users/ejel/post-summarization/.git/COMMIT_EDITMSG",
+		"/Users/ejel/post-summarization/scripts.txt",
+		"/Users/ejel/post-summarization/see-convert.pl",
+		"/Users/ejel/mead/external/libxml-enno-1.02.tar.gz",
+		"/Users/ejel/mead/bin/leadbased-classifier.pl",
+		"/Users/ejel/mead/lib/MEAD/Extract.pm",
+		"/Users/ejel/post-summarization/sanitize.rb",
+		"/Users/ejel/mead/bin/sentjudge-to-extract.pl",
+		"/Users/ejel/mead/bin/feature-scripts/Skeleton.pl",
+		"/Users/ejel/mead/bin/evaluation/content_based/extract1",
+		"/Users/ejel/mead/bin/evaluation/content_based/extract2",
+		"/Users/ejel/mead/bin/extract-to-summary.pl",
+		"/Users/ejel/mead/data/t.extract",
+		"/Users/ejel/mead/bin/sentrelutils/examples/gulfair3.extract.10",
+		"/Users/ejel/mead/data/GA3/GA3.10.extract",
+		"/Users/ejel/mead/data/GA3/GA3.20.extract",
+		"/Users/ejel/mead/external/Text-Iconv-1.4.tar.gz",
+		"/Users/ejel/mead/lib/DUC/Extract.pm",
+		"/Users/ejel/mead/dtd/extract.dtd",
+		"/Users/ejel/mead/bin/enidf",
+		"/Users/ejel/post-summarization/Sentences/NYC/feature/60763_5_3056374.SimWithFirst.sentfeature",
+		"/Users/ejel/mead/lib/MEAD/SentFeature.pm",
+		"/Users/ejel/mead/dtd/sentalign.dtd",
+		"/Users/ejel/mead/etc/cnidf",
+		"/Users/ejel/mead/bin/feature-scripts/lexrank/LexRank.pl",
+		"/Users/ejel/mead/bin/feature-scripts/lexrank/README",
+		"/tmp/zshecl322",
+		"/Users/ejel/Library/Application Support/CrashPlan/ui.properties",
+		"/tmp/zshecl24998",
+		"/Users/ejel/ROUGE-1.5.5/sample-test/ROUGE-test.xml",
+		"/Users/ejel/ROUGE-1.5.5/sample-test/SL2003/models/SL.P.10.R.A.SL062003-01.html",
+		"/Users/ejel/.zshrc",
+		"/Users/ejel/Library/Application Support/Sublime Text 3/Packages/User/Markdown.sublime-settings",
+		"/Users/ejel/Library/Application Support/Sublime Text 3/Packages/User/Preferences.sublime-settings",
+		"/Users/ejel/Downloads/ADOBE.CREATIVE.SUITE.6.0.MASTER.COLLECTION.LS16.ESD-ISO+MACOSX/Mac-nfo.nfo",
+		"/Users/ejel/Library/Application Support/Sublime Text 3/Packages/User/Default (OSX).sublime-keymap",
+		"/Users/ejel/.dotfiles/README.md",
+		"/Users/ejel/.dotfiles/.git/COMMIT_EDITMSG",
+		"/Users/ejel/.dotfiles/vim/.gitignore",
+		"/Users/ejel/.dotfiles/gitignore_global",
+		"/Users/ejel/.vimrc",
+		"/Users/ejel/.gitignore_global",
+		"/Library/LaunchDaemons/com.crashplan.engine.plist",
+		"/Users/ejel/code/ejel.github.com/_layouts/base.html",
+		"/Users/ejel/code/ejel.github.com/css/main.css",
+		"/Users/ejel/code/ejel.github.com/.htaccess",
+		"/Users/ejel/code/ejel.github.com/_layouts/post.html",
+		"/Users/ejel/code/ejel.github.com/.git/COMMIT_EDITMSG",
+		"/Users/ejel/code/ejel.github.com/css/handheld.css",
+		"/Users/ejel/code/ejel.github.com/_publish/exclude.html",
+		"/Users/ejel/code/ejel.github.com/css/style.scss",
+		"/Users/ejel/.zprofile",
+		"/Users/ejel/post-summarization/multi-docsent.rb",
+		"/Users/ejel/post-summarization/docsent-post.xsl",
+		"/Users/ejel/post-summarization/Sentences/NYC/60763_5_3056374.docsent",
+		"/Users/ejel/post-summarization/gen-cluster.rb",
+		"/Users/ejel/post-summarization/merge-sentence.rb",
+		"/Users/ejel/post-summarization/.gitignore",
+		"/Users/ejel/post-summarization/Sentences/NYC/60763_5_3058689.docsent",
+		"/Users/ejel/post-summarization/Sentences/NYC/60763_5_3060698.docsent",
+		"/Users/ejel/post-summarization/Sentences/NYC/60763_5_3064008.docsent",
+		"/Users/ejel/post-summarization/Sentences/NYC/60763_5_3064362.docsent",
+		"/Users/ejel/post-summarization/Sentences/NYC/60763_5_3064470.docsent",
+		"/Users/ejel/post-summarization/Sentences/NYC/60763_5_3066517.docsent",
+		"/Users/ejel/post-summarization/Sentences/NYC/60763_5_3068506.docsent",
+		"/Users/ejel/post-summarization/Sentences/NYC/60763_5_3069320.docsent",
+		"/Users/ejel/post-summarization/Sentences/NYC/60763_5_3069350.docsent",
+		"/Users/ejel/post-summarization/Sentences/NYC/60763_5_3070628.docsent",
+		"/Users/ejel/post-summarization/Sentences/NYC/60763_5_3072065.docsent",
+		"/Users/ejel/post-summarization/Sentences/NYC/60763_5_3073751.docsent",
+		"/Users/ejel/post-summarization/Sentences/NYC/60763_5_3074595.docsent",
+		"/Users/ejel/post-summarization/Sentences/NYC/60763_5_3075702.docsent",
+		"/Users/ejel/post-summarization/Sentences/NYC/60763_5_3077558.docsent",
+		"/Users/ejel/post-summarization/Sentences/NYC/60763_5_3083027.docsent",
+		"/Users/ejel/post-summarization/Sentences/NYC/60763_5_3084017.docsent",
+		"/Users/ejel/post-summarization/Sentences/NYC/60763_5_3087222.docsent",
+		"/Users/ejel/post-summarization/Sentences/NYC/60763_5_3087772.docsent",
+		"/Users/ejel/post-summarization/Sentences/NYC/60763_5_3089608.docsent",
+		"/Users/ejel/post-summarization/Sentences/NYC/60763_5_3091478.docsent",
+		"/Users/ejel/post-summarization/Sentences/NYC/60763_5_3091976.docsent",
+		"/Users/ejel/post-summarization/Sentences/NYC/60763_5_3092614.docsent",
+		"/Users/ejel/post-summarization/Sentences/NYC/60763_5_3093113.docsent",
+		"/Users/ejel/post-summarization/Sentences/NYC/60763_5_3093215.docsent",
+		"/Users/ejel/post-summarization/Sentences/NYC/60763_5_3094254.docsent",
+		"/Users/ejel/post-summarization/Sentences/NYC/60763_5_3095601.docsent",
+		"/Users/ejel/post-summarization/Sentences/NYC/60763_5_3096734.docsent",
+		"/Users/ejel/post-summarization/Sentences/NYC/60763_5_3099782.docsent",
+		"/Users/ejel/post-summarization/Sentences/NYC/60763_5_3100061.docsent",
+		"/Users/ejel/post-summarization/Sentences/NYC/60763_5_3101889.docsent",
+		"/Users/ejel/post-summarization/Sentences/NYC/60763_5_3102647.docsent",
+		"/Users/ejel/post-summarization/Sentences/NYC/60763_5_3106308.docsent",
+		"/Users/ejel/post-summarization/Sentences/NYC/60763_5_3109469.docsent",
+		"/Users/ejel/post-summarization/Sentences/NYC/60763_5_3115033.docsent",
+		"/Users/ejel/post-summarization/Sentences/NYC/60763_5_3116258.docsent",
+		"/Users/ejel/post-summarization/Sentences/NYC/60763_5_3116772.docsent",
+		"/Users/ejel/post-summarization/Sentences/NYC/60763_5_3120461.docsent",
+		"/Users/ejel/post-summarization/Sentences/NYC/60763_5_3120541.docsent",
+		"/Users/ejel/post-summarization/Sentences/NYC/60763_5_3121246.docsent",
+		"/Users/ejel/post-summarization/Sentences/NYC/60763_5_3122150.docsent",
+		"/Users/ejel/post-summarization/Sentences/NYC/60763_5_3126613.docsent",
+		"/Users/ejel/post-summarization/Sentences/NYC/60763_5_3126764.docsent",
+		"/Users/ejel/post-summarization/Sentences/NYC/60763_5_3126920.docsent",
+		"/Users/ejel/post-summarization/Sentences/NYC/60763_5_3127965.docsent",
+		"/Users/ejel/post-summarization/Sentences/NYC/60763_5_3128263.docsent",
+		"/Users/ejel/post-summarization/Sentences/NYC/60763_5_3132861.docsent",
+		"/Users/ejel/post-summarization/Sentences/NYC/60763_5_3135318.docsent",
+		"/Users/ejel/post-summarization/Sentences/NYC/60763_5_3136900.docsent",
+		"/Users/ejel/post-summarization/Sentences/NYC/60763_5_3137212.docsent",
+		"/Users/ejel/post-summarization/Sentences/NYC/60763_5_3138386.docsent",
+		"/Users/ejel/post-summarization/Sentences/NYC/60763_5_3139646.docsent",
+		"/Users/ejel/post-summarization/Sentences/NYC/60763_5_3141256.docsent",
+		"/Users/ejel/post-summarization/Sentences/NYC/60763_5_3142249.docsent",
+		"/Users/ejel/post-summarization/Sentences/NYC/60763_5_3142890.docsent",
+		"/Users/ejel/post-summarization/Sentences/NYC/60763_5_3144153.docsent",
+		"/Users/ejel/post-summarization/Sentences/NYC/60763_5_3144486.docsent",
+		"/Users/ejel/post-summarization/Sentences/NYC/60763_5_3148910.docsent",
+		"/Users/ejel/post-summarization/Sentences/NYC/60763_5_3149492.docsent",
+		"/Users/ejel/post-summarization/Sentences/NYC/60763_5_3150878.docsent",
+		"/Users/ejel/post-summarization/Sentences/NYC/60763_5_3151063.docsent",
+		"/Users/ejel/post-summarization/Sentences/NYC/60763_5_3151193.docsent",
+		"/Users/ejel/post-summarization/Sentences/NYC/60763_5_3151841.docsent",
+		"/Users/ejel/post-summarization/Sentences/NYC/60763_5_3152142.docsent",
+		"/Users/ejel/post-summarization/Sentences/NYC/60763_5_3153963.docsent",
+		"/Users/ejel/post-summarization/Sentences/NYC/60763_5_3153985.docsent",
+		"/Users/ejel/post-summarization/Sentences/NYC/60763_5_3155258.docsent",
+		"/Users/ejel/post-summarization/Sentences/NYC/60763_5_3156643.docsent",
+		"/Users/ejel/post-summarization/Sentences/NYC/60763_5_3157541.docsent",
+		"/Users/ejel/post-summarization/Sentences/NYC/60763_5_3157626.docsent"
+	],
+	"find":
+	{
+		"height": 41.0
+	},
+	"find_in_files":
+	{
+		"height": 112.0,
+		"where_history":
+		[
+		]
+	},
+	"find_state":
+	{
+		"case_sensitive": false,
+		"find_history":
+		[
+			"$DIR_SYSTEM",
+			"iconv",
+			"icon",
+			"iconv",
+			"read_query",
+			"open_nidf",
+			"IDF",
+			"Text",
+			"idf",
+			"IDF",
+			"build",
+			"PEER-RooT",
+			"PEER",
+			"wrap",
+			"//",
+			"default"
+		],
+		"highlight": true,
+		"in_selection": false,
+		"preserve_case": false,
+		"regex": false,
+		"replace_history":
+		[
+		],
+		"reverse": false,
+		"show_context": true,
+		"use_buffer2": true,
+		"whole_word": false,
+		"wrap": true
+	},
+	"groups":
+	[
+		{
+			"selected": 6,
+			"sheets":
+			[
+				{
+					"buffer": 0,
+					"file": "/Users/ejel/mead/bin/feature-scripts/Skeleton.pl",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 1746,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								308,
+								308
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Perl/Perl.tmLanguage",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true,
+							"vintage":
+							{
+								"_vintageous_input_parsers":
+								[
+								],
+								"action": null,
+								"action_count": "",
+								"capture_register": false,
+								"mode": "mode_normal",
+								"motion": null,
+								"motion_count": "",
+								"partial_sequence": "",
+								"register": "\"",
+								"sequence": "",
+								"user_input": "",
+								"xpos": 0
+							}
+						},
+						"translation.x": 0.0,
+						"translation.y": 2.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 7,
+					"type": "text"
+				},
+				{
+					"buffer": 1,
+					"file": "meadconfig.rc",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 409,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								0,
+								0
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Text/Plain text.tmLanguage",
+							"vintage":
+							{
+								"_vintageous_input_parsers":
+								[
+								],
+								"action": null,
+								"action_count": "",
+								"capture_register": false,
+								"mode": "mode_normal",
+								"motion": null,
+								"motion_count": "",
+								"partial_sequence": "",
+								"register": "\"",
+								"sequence": "",
+								"user_input": "",
+								"xpos": 0
+							}
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 5,
+					"type": "text"
+				},
+				{
+					"buffer": 2,
+					"file": "Sentences/NYC/feature/60763_5_3056374.Length.sentfeature",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 3558,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								0,
+								0
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/XML/XML.tmLanguage",
+							"translate_tabs_to_spaces": false,
+							"vintage":
+							{
+								"_vintageous_input_parsers":
+								[
+								],
+								"action": null,
+								"action_count": "",
+								"capture_register": false,
+								"mode": "mode_normal",
+								"motion": null,
+								"motion_count": "",
+								"partial_sequence": "",
+								"register": "\"",
+								"sequence": "",
+								"user_input": "",
+								"xpos": 0
+							}
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 4,
+					"type": "text"
+				},
+				{
+					"buffer": 3,
+					"file": "prepare4rouge-simple.pl",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 5337,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								0,
+								0
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Perl/Perl.tmLanguage",
+							"translate_tabs_to_spaces": false,
+							"vintage":
+							{
+								"_vintageous_input_parsers":
+								[
+								],
+								"action": null,
+								"action_count": "",
+								"capture_register": false,
+								"mode": "mode_normal",
+								"motion": null,
+								"motion_count": "",
+								"partial_sequence": "",
+								"register": "\"",
+								"sequence": "",
+								"user_input": "",
+								"xpos": 0
+							}
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 3,
+					"type": "text"
+				},
+				{
+					"buffer": 4,
+					"file": "mead2rouge.pl",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 3218,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								63,
+								63
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Perl/Perl.tmLanguage",
+							"translate_tabs_to_spaces": false,
+							"vintage":
+							{
+								"_vintageous_glue_until_normal_mode": false,
+								"_vintageous_input_parsers":
+								[
+								],
+								"action": null,
+								"action_count": "",
+								"capture_register": false,
+								"mode": "mode_normal",
+								"motion": null,
+								"motion_count": "",
+								"normal_insert_count": "1",
+								"partial_sequence": "",
+								"register": "\"",
+								"repeat_data":
+								[
+									"native",
+									[
+										"sequence",
+										{
+											"commands":
+											[
+												[
+													"insert",
+													{
+														"characters": "#"
+													}
+												],
+												[
+													"insert",
+													{
+														"characters": " P"
+													}
+												],
+												[
+													"insert",
+													{
+														"characters": "repare"
+													}
+												],
+												[
+													"insert",
+													{
+														"characters": " ROUGE"
+													}
+												],
+												[
+													"insert",
+													{
+														"characters": " input"
+													}
+												],
+												[
+													"insert",
+													{
+														"characters": " files"
+													}
+												],
+												[
+													"insert",
+													{
+														"characters": " from"
+													}
+												],
+												[
+													"insert",
+													{
+														"characters": " MEAD"
+													}
+												],
+												[
+													"insert",
+													{
+														"characters": " sum"
+													}
+												],
+												[
+													"insert",
+													{
+														"characters": "maries."
+													}
+												]
+											]
+										}
+									],
+									"mode_insert",
+									null
+								],
+								"sequence": "",
+								"user_input": "",
+								"xpos": 42
+							}
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 2,
+					"type": "text"
+				},
+				{
+					"buffer": 5,
+					"file": "see-convert.pl",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 284,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								0,
+								0
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Perl/Perl.tmLanguage",
+							"vintage":
+							{
+								"_vintageous_input_parsers":
+								[
+								],
+								"action": null,
+								"action_count": "",
+								"capture_register": false,
+								"mode": "mode_normal",
+								"motion": null,
+								"motion_count": "",
+								"partial_sequence": "",
+								"register": "\"",
+								"sequence": "",
+								"user_input": "",
+								"xpos": 0
+							}
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 1,
+					"type": "text"
+				},
+				{
+					"buffer": 6,
+					"file": "mmr-classifier.py",
+					"semi_transient": true,
+					"settings":
+					{
+						"buffer_size": 518,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								0,
+								0
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Python/Python.tmLanguage",
+							"vintage":
+							{
+								"_vintageous_input_parsers":
+								[
+								],
+								"action": null,
+								"action_count": "",
+								"capture_register": false,
+								"mode": "mode_normal",
+								"motion": null,
+								"motion_count": "",
+								"partial_sequence": "",
+								"register": "\"",
+								"sequence": "",
+								"user_input": "",
+								"xpos": 0
+							}
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 0,
+					"type": "text"
+				}
+			]
+		},
+		{
+			"selected": 2,
+			"sheets":
+			[
+				{
+					"buffer": 7,
+					"file": "/Users/ejel/mead/bin/feature-scripts/Centroid.pl",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 1425,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								443,
+								443
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Perl/Perl.tmLanguage",
+							"tab_size": 4,
+							"vintage":
+							{
+								"_vintageous_glue_until_normal_mode": false,
+								"_vintageous_input_parsers":
+								[
+								],
+								"action": null,
+								"action_count": "",
+								"capture_register": false,
+								"mode": "mode_normal",
+								"motion": null,
+								"motion_count": "",
+								"normal_insert_count": "1",
+								"partial_sequence": "",
+								"register": "\"",
+								"repeat_data":
+								[
+									"native",
+									[
+										"sequence",
+										{
+											"commands":
+											[
+												[
+													"insert",
+													{
+														"characters": "	"
+													}
+												],
+												[
+													"insert",
+													{
+														"characters": "	"
+													}
+												],
+												[
+													"left_delete",
+													null
+												],
+												[
+													"left_delete",
+													null
+												],
+												[
+													"insert",
+													{
+														"characters": "   "
+													}
+												],
+												[
+													"left_delete",
+													null
+												],
+												[
+													"left_delete",
+													null
+												],
+												[
+													"left_delete",
+													null
+												],
+												[
+													"insert",
+													{
+														"characters": "  "
+													}
+												],
+												[
+													"move",
+													{
+														"by": "lines",
+														"forward": true
+													}
+												],
+												[
+													"move",
+													{
+														"by": "lines",
+														"forward": true
+													}
+												],
+												[
+													"move",
+													{
+														"by": "characters",
+														"forward": true
+													}
+												],
+												[
+													"left_delete",
+													null
+												],
+												[
+													"move",
+													{
+														"by": "lines",
+														"forward": true
+													}
+												],
+												[
+													"move",
+													{
+														"by": "characters",
+														"forward": true
+													}
+												],
+												[
+													"left_delete",
+													null
+												],
+												[
+													"move",
+													{
+														"by": "lines",
+														"forward": false
+													}
+												],
+												[
+													"move",
+													{
+														"by": "lines",
+														"forward": false
+													}
+												],
+												[
+													"move",
+													{
+														"by": "lines",
+														"forward": false
+													}
+												],
+												[
+													"move",
+													{
+														"by": "characters",
+														"forward": false
+													}
+												],
+												[
+													"move",
+													{
+														"by": "characters",
+														"forward": false
+													}
+												],
+												[
+													"move",
+													{
+														"by": "characters",
+														"forward": false
+													}
+												],
+												[
+													"move",
+													{
+														"by": "characters",
+														"forward": true
+													}
+												],
+												[
+													"move",
+													{
+														"by": "characters",
+														"forward": true
+													}
+												],
+												[
+													"move",
+													{
+														"by": "characters",
+														"forward": true
+													}
+												],
+												[
+													"move",
+													{
+														"by": "characters",
+														"forward": true
+													}
+												],
+												[
+													"move",
+													{
+														"by": "characters",
+														"forward": true
+													}
+												],
+												[
+													"move",
+													{
+														"by": "characters",
+														"forward": false
+													}
+												],
+												[
+													"move",
+													{
+														"by": "characters",
+														"forward": false
+													}
+												]
+											]
+										}
+									],
+									"mode_insert",
+									null
+								],
+								"sequence": "",
+								"user_input": "",
+								"xpos": 20
+							}
+						},
+						"translation.x": 0.0,
+						"translation.y": 128.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 9,
+					"type": "text"
+				},
+				{
+					"buffer": 8,
+					"file": "/Users/ejel/mead/bin/feature-scripts/Length.pl",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 503,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								0,
+								0
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Perl/Perl.tmLanguage",
+							"vintage":
+							{
+								"_vintageous_input_parsers":
+								[
+								],
+								"action": null,
+								"action_count": "",
+								"capture_register": false,
+								"mode": "mode_normal",
+								"motion": null,
+								"motion_count": "",
+								"partial_sequence": "",
+								"register": "\"",
+								"sequence": "",
+								"user_input": "",
+								"xpos": 0
+							}
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 8,
+					"type": "text"
+				},
+				{
+					"buffer": 9,
+					"file": "/Users/ejel/mead/bin/feature-scripts/Position.pl",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 561,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								557,
+								557
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Perl/Perl.tmLanguage",
+							"vintage":
+							{
+								"_vintageous_input_parsers":
+								[
+								],
+								"action": null,
+								"action_count": "",
+								"capture_register": false,
+								"mode": "mode_normal",
+								"motion": null,
+								"motion_count": "",
+								"partial_sequence": "",
+								"register": "\"",
+								"sequence": "",
+								"user_input": "",
+								"xpos": 0
+							}
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 6,
+					"type": "text"
+				}
+			]
+		}
+	],
+	"incremental_find":
+	{
+		"height": 29.0
+	},
+	"input":
+	{
+		"height": 33.0
+	},
+	"layout":
+	{
+		"cells":
+		[
+			[
+				0,
+				0,
+				1,
+				1
+			],
+			[
+				1,
+				0,
+				2,
+				1
+			]
+		],
+		"cols":
+		[
+			0.0,
+			0.5,
+			1.0
+		],
+		"rows":
+		[
+			0.0,
+			1.0
+		]
+	},
+	"menu_visible": true,
+	"output.find_results":
+	{
+		"height": 0.0
+	},
+	"project": "post-summarization.sublime-project",
+	"replace":
+	{
+		"height": 54.0
+	},
+	"save_all_on_build": true,
+	"select_file":
+	{
+		"height": 0.0,
+		"selected_items":
+		[
+			[
+				"scr",
+				"post-summarization/scripts.txt"
+			],
+			[
+				"script",
+				"post-summarization/scripts.txt"
+			],
+			[
+				"mead",
+				"post-summarization/meadconfig.rc"
+			],
+			[
+				"length",
+				"mead/bin/feature-scripts/Length.pl"
+			],
+			[
+				"ske",
+				"mead/bin/feature-scripts/Skeleton.pl"
+			],
+			[
+				"extract",
+				"mead/lib/MEAD/Extract.pm"
+			],
+			[
+				"centroid",
+				"mead/bin/feature-scripts/Centroid.pl"
+			]
+		],
+		"width": 0.0
+	},
+	"select_project":
+	{
+		"height": 0.0,
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"select_symbol":
+	{
+		"height": 0.0,
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"settings":
+	{
+		"vintage":
+		{
+		}
+	},
+	"show_minimap": true,
+	"show_open_files": false,
+	"show_tabs": true,
+	"side_bar_visible": true,
+	"side_bar_width": 325.0,
+	"status_bar_visible": true,
+	"template_settings":
+	{
+	}
+}
