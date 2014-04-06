@@ -22,40 +22,40 @@ my @theSYSfiles= readdir(SYS);
 
 foreach my $SYSdir (@theSYSfiles) # one dir per classification type
 {
-	my $thepath="$DIR_SYSTEM/$SYSdir";
+    my $thepath="$DIR_SYSTEM/$SYSdir";
 
-	if ((-d $thepath) && ($SYSdir ne '.') && ($SYSdir ne '..') ) {
+    if ((-d $thepath) && ($SYSdir ne '.') && ($SYSdir ne '..') ) {
 
-		opendir(SYSFILES, "$DIR_SYSTEM/$SYSdir") || die("Cannot open directory");
-		my @thefiles= readdir(SYSFILES);
+        opendir(SYSFILES, "$DIR_SYSTEM/$SYSdir") || die("Cannot open directory");
+        my @thefiles= readdir(SYSFILES);
 
-		foreach my $file (@thefiles)
-		{
-			if( ($file ne '.') && ($file ne '..')){
-				my $abspath="$thepath/$file";
-				@sentences = &open_file($abspath);
+        foreach my $file (@thefiles)
+        {
+            if( ($file ne '.') && ($file ne '..')){
+                my $abspath="$thepath/$file";
+                @sentences = &open_file($abspath);
 
-				open (SYSTEM, ">$OUTPUT_HOME/systems/${file}-${SYSdir}.html");
-				print SYSTEM "<html>
-				<head>
-				<title>$file.html</title>
-				</head>
-				<body bgcolor=\"white\">\n";
+                open (SYSTEM, ">$OUTPUT_HOME/systems/${file}-${SYSdir}.html");
+                print SYSTEM "<html>
+                <head>
+                <title>$file.html</title>
+                </head>
+                <body bgcolor=\"white\">\n";
 
-				my $count = 1;
+                my $count = 1;
 
-				foreach my $i (0..$#sentences) {
-					print SYSTEM "<a name=\"$count\">[$count]</a> <a href=\"#$count\" id=$count>";
-					print SYSTEM $sentences[$i];
-					print SYSTEM "</a>\n";
-					$count++;
-				}
-				print SYSTEM "</body>
-				</html>\n";
-				close SYSTEM;
-				}
-			}
-		}
+                foreach my $i (0..$#sentences) {
+                    print SYSTEM "<a name=\"$count\">[$count]</a> <a href=\"#$count\" id=$count>";
+                    print SYSTEM $sentences[$i];
+                    print SYSTEM "</a>\n";
+                    $count++;
+                }
+                print SYSTEM "</body>
+                </html>\n";
+                close SYSTEM;
+                }
+            }
+        }
 }
 
 opendir my $dir, "$OUTPUT_HOME/models" || die "Cannot open dir $!";
@@ -67,8 +67,8 @@ closedir $dir;
 # need only unique names
 my @names = ();
 foreach my $file (@files) {
-	$file =~ s/(.+)-[DV]\.html/$1/g;
-	push(@names, $file);
+    $file =~ s/(.+)-[DV]\.html/$1/g;
+    push(@names, $file);
 }
 @names = uniq(@names);
 
@@ -78,47 +78,47 @@ foreach my $file (@files) {
 
 ### Config ###
 my $config = {
-	'version' => '1.5.5',
-	'EVAL' => [],
+    'version' => '1.5.5',
+    'EVAL' => [],
 };
 
 foreach my $file (@names) {
 
-	my $eval = {
-		'ID' => "$file",
-		'PEER-ROOT' => { content => 'systems'},
-		'MODEL-ROOT' => { content => 'models'},
-		'INPUT-FORMAT' => { TYPE => 'SEE' },
-		'PEERS' => { 'P' => [] },
-		'MODELS' => { 'M' => [] },
-	};
+    my $eval = {
+        'ID' => "$file",
+        'PEER-ROOT' => { content => 'systems'},
+        'MODEL-ROOT' => { content => 'models'},
+        'INPUT-FORMAT' => { TYPE => 'SEE' },
+        'PEERS' => { 'P' => [] },
+        'MODELS' => { 'M' => [] },
+    };
 
-	my $model1 = {
-		'ID' => 'D',
-		'content' => "${file}-D.html"
-	};
-	push($eval->{'MODELS'}->{'M'}, $model1);
-	my $model2 = {
-		'ID' => 'V',
-		'content' => "${file}-V.html"
-	};
-	push($eval->{'MODELS'}->{'M'}, $model2);
+    my $model1 = {
+        'ID' => 'D',
+        'content' => "${file}-D.html"
+    };
+    push($eval->{'MODELS'}->{'M'}, $model1);
+    my $model2 = {
+        'ID' => 'V',
+        'content' => "${file}-V.html"
+    };
+    push($eval->{'MODELS'}->{'M'}, $model2);
 
-	foreach my $s (@theSYSfiles) {
-		my $peer = {
-			'ID' => "$s",
-			'content' => "${file}-$s.html"
-		};
-		push($eval->{'PEERS'}->{'P'}, $peer);
-	}
-	push($config->{'EVAL'}, $eval);
+    foreach my $s (@theSYSfiles) {
+        my $peer = {
+            'ID' => "$s",
+            'content' => "${file}-$s.html"
+        };
+        push($eval->{'PEERS'}->{'P'}, $peer);
+    }
+    push($config->{'EVAL'}, $eval);
 }
 
 # open my $settingFile, "$OUTPUT_HOME/settings.xml" || die "can't open";
 my $xs = XML::Simple->new(
-		RootName => 'ROUGE-EVAL',
-		KeyAttr => {},
-		ForceArray => 1,
+        RootName => 'ROUGE-EVAL',
+        KeyAttr => {},
+        ForceArray => 1,
 );
 # close $settingFile;
 
