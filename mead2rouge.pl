@@ -10,8 +10,8 @@ use List::MoreUtils qw(uniq);
 
 ### INIT ###
 
-my $OUTPUT_HOME = "/Users/ejel/post-summarization/Sentences/rouge-staging"; #where to generate output
-my $DIR_SYSTEM="/Users/ejel/post-summarization/Sentences/NYC/mead-output"; # location of system generated files
+my $OUTPUT_HOME = "/Users/ejel/forum-s11n/Sentences/rouge-staging"; #where to generate output
+my $DIR_SYSTEM="/Users/ejel/forum-s11n/Sentences/NYC/mead-output"; # location of system generated files
 my @sentences = ();
 
 
