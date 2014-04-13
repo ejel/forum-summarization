@@ -3,7 +3,9 @@ compression_percent 20
 feature_cache_policy delete
 
 feature TitleSim -recompute /Users/ejel/mead/bin/feature-scripts/SimWithFirst.pl enidf ENG
-feature Length -recompute feature-scripts/Length.pl
+feature UniqueWords -recompute feature-scripts/UniqueWords.pl
 feature Position -recompute /Users/ejel/mead/bin/feature-scripts/Position.pl
 feature Centroid -recompute /Users/ejel/mead/bin/feature-scripts/Centroid.pl enidf ENG
 feature Cohesion -recompute feature-scripts/Cohesion.pl enidf
+
+classifier /Users/ejel/mead/bin/default-classifier.pl TitleSim 1 Centroid 1 UniqueWords 1 Position 1 Cohesion 1
