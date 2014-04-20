@@ -7,5 +7,6 @@ feature UniqueWords -recompute feature-scripts/UniqueWords.pl
 feature Position -recompute /Users/ejel/mead/bin/feature-scripts/Position.pl
 feature Centroid -recompute /Users/ejel/mead/bin/feature-scripts/Centroid.pl enidf ENG
 feature Cohesion -recompute feature-scripts/Cohesion.pl enidf
+feature UserAuthority -recompute feature-scripts/UserAuthority.pl Sentences/NYC/authUserTravelAll.txt
 
-classifier /Users/ejel/mead/bin/default-classifier.pl TitleSim 1 Centroid 1 UniqueWords 1 Position 1 Cohesion 1
+classifier /Users/ejel/mead/bin/default-classifier.pl TitleSim 1 Centroid 1 UniqueWords 1 Position 1 Cohesion 1 UserAuthority 1

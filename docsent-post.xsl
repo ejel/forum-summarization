@@ -34,6 +34,9 @@
         <xsl:attribute name="SNO">
           <xsl:number count="Post|InitPost" value="position() + 1" format="1" />
         </xsl:attribute>
+        <xsl:attribute name="UserID">
+          <xsl:value-of select="UserID" />
+        </xsl:attribute>
 
       <xsl:call-template name="join">
         <xsl:with-param name="list" select="Sentence/SText" />
