@@ -37,6 +37,9 @@
         <xsl:attribute name="UserID">
           <xsl:value-of select="UserID" />
         </xsl:attribute>
+        <xsl:attribute name="Class">
+          <xsl:value-of select="Class" />
+        </xsl:attribute>
 
       <xsl:call-template name="join">
         <xsl:with-param name="list" select="Sentence/SText" />

@@ -1,4 +1,16 @@
 ---------------------------------------------
+basic1+auth+postclass ROUGE-1 Average_R: 0.50662 (95%-conf.int. 0.48147 - 0.53071)
+basic1+auth+postclass ROUGE-1 Average_P: 0.22115 (95%-conf.int. 0.20283 - 0.24007)
+basic1+auth+postclass ROUGE-1 Average_F: 0.29344 (95%-conf.int. 0.27625 - 0.31004)
+---------------------------------------------
+basic1+auth+postclass ROUGE-2 Average_R: 0.18293 (95%-conf.int. 0.15844 - 0.21099)
+basic1+auth+postclass ROUGE-2 Average_P: 0.08304 (95%-conf.int. 0.06915 - 0.09870)
+basic1+auth+postclass ROUGE-2 Average_F: 0.10880 (95%-conf.int. 0.09212 - 0.12740)
+---------------------------------------------
+basic1+auth+postclass ROUGE-L Average_R: 0.37416 (95%-conf.int. 0.34967 - 0.39897)
+basic1+auth+postclass ROUGE-L Average_P: 0.16624 (95%-conf.int. 0.14919 - 0.18346)
+basic1+auth+postclass ROUGE-L Average_F: 0.21890 (95%-conf.int. 0.20197 - 0.23784)
+---------------------------------------------
 post-basic1 ROUGE-1 Average_R: 0.49953 (95%-conf.int. 0.47343 - 0.52496)
 post-basic1 ROUGE-1 Average_P: 0.21731 (95%-conf.int. 0.20084 - 0.23426)
 post-basic1 ROUGE-1 Average_F: 0.28972 (95%-conf.int. 0.27346 - 0.30759)
